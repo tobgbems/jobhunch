@@ -22,13 +22,14 @@ Create `.env.local` from `.env.example` (if present):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_SITE_URL` — used for auth redirects (e.g. `http://localhost:3000`)
+- `NEXT_PUBLIC_SITE_URL` — canonical public origin, no trailing slash. **Production:** `https://thejobhunch.com`. **Local dev:** `http://localhost:3000`. Used by `getSiteUrl()` in `lib/site-url.ts` when the `Origin` header is missing (server actions / OAuth `redirectTo`, magic-link `emailRedirectTo`, callback fallback).
 
 ## Authentication
 
 - **Google OAuth** and **magic link** (email) via Supabase Auth — no passwords.
+- Redirect URLs use **`${origin}/auth/callback`** where `origin` is `headers().get("origin")` when present, else **`getSiteUrl()`** from `lib/site-url.ts` (reads `NEXT_PUBLIC_SITE_URL`). **Supabase Dashboard → Authentication → URL configuration** must include `https://thejobhunch.com` and (for local testing) `http://localhost:3000`.
 - Post-login default redirect: **`/dashboard`** (`app/auth/actions.ts`, `app/auth/callback/route.ts`).
-- **Middleware** refreshes the Supabase session (`middleware.ts`, `lib/supabase/middleware.ts`).
+- **Middleware** refreshes the Supabase session (`middleware.ts`, `lib/supabase/middleware.ts`) — no hardcoded site URLs.
 - Browser client: `lib/supabase/client.ts`; server client: `lib/supabase/server.ts`.
 
 ## Database & migrations
@@ -97,4 +98,4 @@ When shipping a feature or changing schema:
 
 ---
 
-*Last updated: 2026-03-27 — includes landing, auth, reviews, job board, applications tracker, and migration list.*
+*Last updated: 2026-03-27 — production domain **thejobhunch.com**; `lib/site-url.ts` for auth base URL; `next.config.mjs` image `remotePatterns` for thejobhunch.com.*

@@ -3,10 +3,11 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSiteUrl } from "@/lib/site-url";
 
 export async function signInWithGoogle() {
   const supabase = createClient();
-  const origin = headers().get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const origin = headers().get("origin") ?? getSiteUrl();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -25,7 +26,7 @@ export async function signInWithGoogle() {
 export async function signInWithMagicLink(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const supabase = createClient();
-  const origin = headers().get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const origin = headers().get("origin") ?? getSiteUrl();
 
   if (!email) {
     redirect("/auth?error=missing_email");

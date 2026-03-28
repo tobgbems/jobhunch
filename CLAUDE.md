@@ -16,9 +16,11 @@ This file gives Claude (and humans) a concise technical and product overview. **
 ## Local setup
 
 1. `npm install`
-2. Copy `.env.example` → `.env.local` and set Supabase URL, anon key, and `NEXT_PUBLIC_SITE_URL`.
+2. Copy `.env.example` → `.env.local` and set Supabase URL, anon key, and `NEXT_PUBLIC_SITE_URL` (production: **`https://thejobhunch.com`**; local dev: **`http://localhost:3000`**).
 3. Run SQL migrations in Supabase (see `supabase/migrations/`, chronological order).
 4. `npm run dev` → http://localhost:3000
+
+**Production site:** [https://thejobhunch.com](https://thejobhunch.com)
 
 ## Implemented features (high level)
 
@@ -49,6 +51,7 @@ Exact migration filenames and purposes are listed in **`AGENTS.md`** (single sou
 
 | Area | Location |
 |------|-----------|
+| Public site URL (auth fallbacks) | `lib/site-url.ts` (`getSiteUrl` → `NEXT_PUBLIC_SITE_URL`) |
 | Supabase browser client | `lib/supabase/client.ts` |
 | Supabase server client | `lib/supabase/server.ts` |
 | Dashboard layout & nav counts | `app/dashboard/layout.tsx` |
@@ -63,4 +66,4 @@ Exact migration filenames and purposes are listed in **`AGENTS.md`** (single sou
 
 ---
 
-*Last updated: 2026-03-27.*
+*Last updated: 2026-03-27 — production domain thejobhunch.com, `lib/site-url.ts` for auth base URL.*
