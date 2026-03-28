@@ -1,18 +1,18 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
 
+const authCallbackUrl = () => `${getSiteUrl()}/auth/callback`;
+
 export async function signInWithGoogle() {
   const supabase = createClient();
-  const origin = headers().get("origin") ?? getSiteUrl();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${origin}/auth/callback?next=/dashboard`,
+      redirectTo: authCallbackUrl(),
     },
   });
 
@@ -26,7 +26,6 @@ export async function signInWithGoogle() {
 export async function signInWithMagicLink(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const supabase = createClient();
-  const origin = headers().get("origin") ?? getSiteUrl();
 
   if (!email) {
     redirect("/auth?error=missing_email");
@@ -35,7 +34,7 @@ export async function signInWithMagicLink(formData: FormData) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${origin}/auth/callback?next=/dashboard`,
+      emailRedirectTo: authCallbackUrl(),
     },
   });
 
