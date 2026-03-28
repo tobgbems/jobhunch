@@ -4,20 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -30,24 +16,24 @@
     --font-sans: var(--font-sans);
   }
   :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --background: #0d0d0d;
+    --foreground: #f8f8f8;
+    --card: #131313;
+    --card-foreground: #f8f8f8;
+    --popover: #131313;
+    --popover-foreground: #f8f8f8;
+    --primary: #27ae60;
+    --primary-foreground: #f8fff5;
+    --secondary: #f5a623;
+    --secondary-foreground: #1c1c1c;
+    --muted: #1b1b1b;
+    --muted-foreground: #b9b9b9;
+    --accent: #1f1f1f;
+    --accent-foreground: #f8f8f8;
     --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
+    --border: #2b2b2b;
+    --input: #2b2b2b;
+    --ring: #27ae60;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -63,25 +49,46 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
   }
+
+  /* Light theme override for the Dashboard/Reviews UI. */
+  .reviews-light {
+    --background: #f7f8fa;
+    --foreground: #0d0d0d;
+    --card: #ffffff;
+    --card-foreground: #0d0d0d;
+    --popover: #ffffff;
+    --popover-foreground: #0d0d0d;
+    --primary: #27ae60;
+    --primary-foreground: #ffffff;
+    --secondary: #f5a623;
+    --secondary-foreground: #0d0d0d;
+    --muted: #f1f2f4;
+    --muted-foreground: #5a5a5a;
+    --accent: #f7f8fa;
+    --accent-foreground: #0d0d0d;
+    --border: #e6e7ea;
+    --input: #e6e7ea;
+    --ring: #27ae60;
+  }
   .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
+    --background: #0d0d0d;
+    --foreground: #f8f8f8;
+    --card: #131313;
+    --card-foreground: #f8f8f8;
+    --popover: #131313;
+    --popover-foreground: #f8f8f8;
+    --primary: #27ae60;
+    --primary-foreground: #f8fff5;
+    --secondary: #f5a623;
+    --secondary-foreground: #1c1c1c;
+    --muted: #1b1b1b;
+    --muted-foreground: #b9b9b9;
+    --accent: #1f1f1f;
+    --accent-foreground: #f8f8f8;
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
+    --border: #2b2b2b;
+    --input: #2b2b2b;
+    --ring: #27ae60;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -97,12 +104,23 @@
     --sidebar-ring: oklch(0.556 0 0);
   }
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--border);
+    outline-color: color-mix(in srgb, var(--ring) 50%, transparent);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image: radial-gradient(circle at top right, rgba(39, 174, 96, 0.15), transparent 40%);
   }
   html {
     @apply font-sans;
+  }
+  /* Anchor smooth scroll (avoids a client chunk on the landing page; fixes flaky dev chunk errors). */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 }
