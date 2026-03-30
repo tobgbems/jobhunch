@@ -30,10 +30,11 @@ This file gives Claude (and humans) a concise technical and product overview. **
 4. **Reviews** — Company search/list, company detail by slug, `ReviewWizard` (create/edit), ratings, anonymity, reads from **`public_reviews`** view with `is_owner` for edit/delete.
 5. **Job board** — `/dashboard/jobs`: seeded listings, search/filters (client-side), pagination, job detail panel, **Save to tracker** → `job_applications` with `status: saved`.
 6. **Application tracker** — `/dashboard/applications`: stats, status tabs, cards, add/edit modal (native selects for reliability), delete confirm; joins **`jobs`** when `job_id` is set.
+7. **Public company pages** — `/company/[slug]`: server-rendered, SEO metadata per company, public company details + rating aggregates + reviews + open jobs; review pros/cons blur for logged-out users with sign-in prompt.
 
 ## Database artifacts
 
-- **Tables:** `profiles`, `companies`, `reviews`, `jobs`, `job_applications`
+- **Tables:** `profiles`, `companies` (includes optional `size`), `reviews`, `jobs`, `job_applications`
 - **View:** `public_reviews` — safe reviewer display; includes **`is_owner`** for UI ownership checks
 - **Enum:** `job_application_status`
 - **Trigger:** new auth users get a `profiles` row (plus backfill migration for legacy users)
@@ -52,6 +53,7 @@ Exact migration filenames and purposes are listed in **`AGENTS.md`** (single sou
 | Area | Location |
 |------|-----------|
 | Public site URL (auth fallbacks) | `lib/site-url.ts` (`getSiteUrl` → `NEXT_PUBLIC_SITE_URL`) |
+| Favicon metadata source | `app/layout.tsx` (`metadata.icons.icon`) |
 | Supabase browser client | `lib/supabase/client.ts` |
 | Supabase server client | `lib/supabase/server.ts` |
 | Dashboard layout & nav counts | `app/dashboard/layout.tsx` |
@@ -63,7 +65,8 @@ Exact migration filenames and purposes are listed in **`AGENTS.md`** (single sou
 
 - If Next dev fails with missing `./NNN.js` chunks: delete **`.next`**, restart `npm run dev`.
 - After altering tables, ensure migrations are applied; `job_applications` **requires** `location` and `job_type` columns for current app code — see migration `20260327240000_job_applications_location_job_type.sql`.
+- Keep favicon in `public/favicon.ico` and avoid `app/favicon.ico` to prevent App Router path conflicts (`/favicon.ico` 500).
 
 ---
 
-*Last updated: 2026-03-27 — production domain thejobhunch.com, `lib/site-url.ts` for auth base URL.*
+*Last updated: 2026-03-30 — production domain thejobhunch.com, `lib/site-url.ts` for auth base URL, favicon served from `public/favicon.ico` via `app/layout.tsx` metadata, and SSR public company pages at `/company/[slug]`.*

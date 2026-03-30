@@ -248,6 +248,13 @@ export default function CompanyReviewsPage({ params }: { params: { slug: string 
                       <span>{company.industry ?? "Industry"}</span>
                       <span className="text-[#E5E7EB]">·</span>
                       <span>{company.location ?? "Location"}</span>
+                      <span className="text-[#E5E7EB]">·</span>
+                      <Link
+                        href={`/company/${encodeURIComponent(company.slug)}`}
+                        className="font-medium text-[#27AE60] underline-offset-4 hover:underline"
+                      >
+                        Public page
+                      </Link>
                       {company.website ? (
                         <>
                           <span className="text-[#E5E7EB]">·</span>

@@ -43,6 +43,7 @@ Migrations live in **`supabase/migrations/`**. Apply via Supabase CLI or paste i
 | `20260326223000_profiles_backfill_and_insert_policy.sql` | Backfill missing `profiles` rows; insert-own-profile policy (fixes FK issues for reviews) |
 | `20260327120000_seed_jobs_nigeria.sql` | Seeds **15** Nigerian job rows (also duplicated for manual run in `supabase/seed_jobs_manual.sql` if present) |
 | `20260327240000_job_applications_location_job_type.sql` | Adds **`location`** and **`job_type`** to `job_applications` + check constraint; ends with `NOTIFY pgrst, 'reload schema'` for PostgREST |
+| `20260330153000_companies_add_size.sql` | Adds optional **`size`** column on `companies` for public company profile display + PostgREST schema reload |
 
 **RLS summary:** Users own their `profiles` and `job_applications`; `reviews` are readable by all, writable by owner; `jobs` / `companies` readable broadly; inserts to `jobs` restricted to service role; review reads for the app use **`public_reviews`**, not raw `reviews`, so anonymous reviews never leak identity in list/detail UIs.
 
@@ -64,6 +65,7 @@ Migrations live in **`supabase/migrations/`**. Apply via Supabase CLI or paste i
 | `/dashboard/jobs` | Job board (`components/jobs/JobBoard.tsx`) — filters, pagination, detail dialog, **Save to tracker** |
 | `/dashboard/applications` | Application tracker (`components/applications/ApplicationsTracker.tsx`) |
 | `/dashboard/profile` | Placeholder |
+| `/company/[slug]` | Public, crawlable company page with SSR metadata, rating summaries, reviews (pros/cons blurred for logged-out users), and open jobs |
 
 ## UI / brand conventions (dashboard & product)
 
@@ -82,6 +84,7 @@ Migrations live in **`supabase/migrations/`**. Apply via Supabase CLI or paste i
 - **Stale Next.js build:** If dev throws `Cannot find module './NNN.js'` under `.next`, stop the dev server, delete the **`.next`** folder, run `npm run dev` again.
 - **Windows / Watchpack:** Harmless warnings scanning `C:\` system files sometimes appear; not app bugs.
 - **Supabase schema cache:** After DDL changes, migration `20260327240000...` includes `NOTIFY pgrst, 'reload schema'`. If API still lags, wait a minute or reload from Supabase dashboard.
+- **Favicon conflicts in App Router:** Do not keep both `app/favicon.ico` and `public/favicon.ico`. This causes `500` with “conflicting public file and page file” on `/favicon.ico`. Prefer `public/favicon.ico` and set `metadata.icons.icon` in `app/layout.tsx`.
 
 ## What to preserve when changing code
 
@@ -98,4 +101,4 @@ When shipping a feature or changing schema:
 
 ---
 
-*Last updated: 2026-03-27 — production domain **thejobhunch.com**; `lib/site-url.ts` for auth base URL; `next.config.mjs` image `remotePatterns` for thejobhunch.com.*
+*Last updated: 2026-03-30 — production domain **thejobhunch.com**; `lib/site-url.ts` for auth base URL; `next.config.mjs` image `remotePatterns`; favicon served from `public/favicon.ico` with `metadata.icons` in `app/layout.tsx`; public SSR company pages at `/company/[slug]`.*

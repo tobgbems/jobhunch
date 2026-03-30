@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   ArrowUpRight,
   Bookmark,
@@ -32,13 +33,19 @@ import { cn } from "@/lib/utils";
 
 export type JobRow = {
   id: string;
+  company_id: string | null;
   company_name: string;
+  company_slug: string | null;
   title: string;
   location: string | null;
   job_type: string | null;
   apply_url: string | null;
   source: string | null;
   posted_at: string | null;
+};
+
+type RawJobRow = Omit<JobRow, "company_slug"> & {
+  companies: { slug: string } | { slug: string }[] | null;
 };
 
 const PAGE_SIZE = 10;
@@ -137,14 +144,22 @@ export function JobBoard() {
       setLoadError(null);
       const { data, error } = await supabase
         .from("jobs")
-        .select("id,company_name,title,location,job_type,apply_url,source,posted_at")
+        .select("id,company_id,company_name,title,location,job_type,apply_url,source,posted_at,companies(slug)")
         .order("posted_at", { ascending: false });
       if (cancelled) return;
       if (error) {
         setLoadError(error.message);
         setJobs([]);
       } else {
-        setJobs((data ?? []) as JobRow[]);
+        const mapped = ((data ?? []) as RawJobRow[]).map((row) => {
+          const relation = Array.isArray(row.companies) ? row.companies[0] : row.companies;
+          const { companies, ...job } = row;
+          return {
+            ...job,
+            company_slug: relation?.slug ?? null,
+          };
+        });
+        setJobs(mapped);
       }
       setLoading(false);
     })();
@@ -314,7 +329,17 @@ export function JobBoard() {
                           <div className="min-w-0">
                             <h2 className="text-base font-semibold text-[#0D0D0D]">{job.title}</h2>
                             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[#6B7280]">
-                              <span>{job.company_name}</span>
+                              {job.company_slug ? (
+                                <Link
+                                  href={`/company/${encodeURIComponent(job.company_slug)}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="font-medium text-[#27AE60] underline-offset-4 hover:underline"
+                                >
+                                  {job.company_name}
+                                </Link>
+                              ) : (
+                                <span>{job.company_name}</span>
+                              )}
                               <span className="inline-flex items-center gap-1">
                                 <MapPin className="size-3.5 shrink-0" aria-hidden />
                                 {job.location ?? "—"}
@@ -402,7 +427,16 @@ export function JobBoard() {
                     {detailJob.title}
                   </DialogTitle>
                   <DialogDescription className="text-base font-medium text-[#6B7280]">
-                    {detailJob.company_name}
+                      {detailJob.company_slug ? (
+                        <Link
+                          href={`/company/${encodeURIComponent(detailJob.company_slug)}`}
+                          className="text-[#27AE60] underline-offset-4 hover:underline"
+                        >
+                          {detailJob.company_name}
+                        </Link>
+                      ) : (
+                        detailJob.company_name
+                      )}
                   </DialogDescription>
                 </DialogHeader>
                 <Button

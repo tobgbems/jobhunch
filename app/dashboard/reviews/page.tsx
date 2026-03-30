@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2, MapPin, PenLine, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -180,6 +181,13 @@ export default function ReviewsCompaniesPage() {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-base font-semibold text-[#0D0D0D]">{c.name}</p>
+                      <Link
+                        href={`/company/${encodeURIComponent(c.slug)}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-1 inline-flex text-xs font-medium text-[#27AE60] underline-offset-4 hover:underline"
+                      >
+                        View public page
+                      </Link>
                       <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#6B7280]">
                         <span className="inline-flex items-center gap-1">
                           <Building2 className="size-3.5 shrink-0" aria-hidden />
