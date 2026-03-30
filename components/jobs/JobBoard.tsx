@@ -257,7 +257,7 @@ export function JobBoard() {
           <SelectTrigger className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[180px]">
             <SelectValue placeholder="Job type" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[80] border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
             {JOB_TYPE_OPTIONS.map((o) => (
               <SelectItem key={o.value} value={o.value}>
                 {o.label}
@@ -269,7 +269,7 @@ export function JobBoard() {
           <SelectTrigger className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[180px]">
             <SelectValue placeholder="Location" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[80] border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
             {LOCATION_OPTIONS.map((o) => (
               <SelectItem key={o.value} value={o.value}>
                 {o.label}

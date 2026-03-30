@@ -419,7 +419,10 @@ export default function CompanyReviewsPage({ params }: { params: { slug: string 
       ) : null}
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="max-w-md rounded-2xl border-[#E5E7EB] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.12)] sm:max-w-md">
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-md rounded-2xl border border-[#E5E7EB] bg-white p-6 text-[#0D0D0D] shadow-[0_16px_40px_rgba(0,0,0,0.20)] ring-1 ring-black/5 sm:max-w-md"
+        >
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-[#0D0D0D]">Delete this review?</DialogTitle>
           </DialogHeader>
