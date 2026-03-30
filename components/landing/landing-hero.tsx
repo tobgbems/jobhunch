@@ -35,7 +35,7 @@ export function LandingHero() {
           </p>
         </div>
 
-        <div id="reviews" className="scroll-mt-28 flex justify-center lg:justify-end">
+        <div className="flex justify-center lg:justify-end">
           <ReviewMockup />
         </div>
       </div>

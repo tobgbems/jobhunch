@@ -4,7 +4,7 @@ import Link from "next/link";
 const navLinks = [
   { href: "#features", label: "Features" },
   { href: "#reviews", label: "Reviews" },
-  { href: "#jobs", label: "Jobs" },
+  { href: "/dashboard/jobs", label: "Jobs" },
   { href: "#pricing", label: "Pricing" },
 ];
 
@@ -26,13 +26,13 @@ export function LandingNavbar() {
 
           <nav className="hidden flex-1 items-center justify-center gap-8 md:flex" aria-label="Primary">
             {navLinks.map((item) => (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
                 className="text-sm font-medium text-[#6B7280] transition-colors hover:text-[#0D0D0D]"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -57,13 +57,13 @@ export function LandingNavbar() {
           aria-label="Primary mobile"
         >
           {navLinks.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className="text-xs font-medium text-[#6B7280] transition-colors hover:text-[#0D0D0D]"
             >
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
       </div>
