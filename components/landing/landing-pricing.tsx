@@ -9,7 +9,7 @@ export function LandingPricing() {
           Simple plans when you&apos;re ready
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-center text-[#6B7280]">
-          We&apos;re finalizing tiers and features. JobHunch will stay easy to try — details and pricing will be posted
+          We&apos;re finalizing tiers and features. JobHunch will stay easy to try. Details and pricing will be posted
           here soon.
         </p>
 
@@ -17,7 +17,7 @@ export function LandingPricing() {
           <div className="rounded-2xl border border-[#E5E7EB] bg-[#F7F8FA] p-8 text-center shadow-sm">
             <p className="text-lg font-semibold text-[#0D0D0D]">Free to explore</p>
             <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">
-              Start with core reviews and job tools at no cost. Paid options for teams and power users will follow — we
+              Start with core reviews and job tools at no cost. Paid options for teams and power users will follow. We
               will spell out exactly what you get before anything changes.
             </p>
             <Link

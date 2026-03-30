@@ -4,7 +4,7 @@ const features = [
   {
     icon: Shield,
     title: "Anonymous reviews",
-    body: "Find out what employees really think. Reviews are anonymous by choice — your identity stays protected.",
+    body: "Find out what employees really think. Reviews are anonymous by choice. Your identity stays protected.",
   },
   {
     icon: Building2,
@@ -14,12 +14,12 @@ const features = [
   {
     icon: Briefcase,
     title: "Curated job board",
-    body: "Browse opportunities from top African companies. Every listing is vetted — no spam, no fake roles.",
+    body: "Browse opportunities from top African companies. Every listing is vetted. No spam, no fake roles.",
   },
   {
     icon: ListChecks,
     title: "Track your applications",
-    body: "Stay organized across every application — whether you applied on JobHunch or anywhere else.",
+    body: "Stay organized across every application, whether you applied on JobHunch or anywhere else.",
   },
 ];
 

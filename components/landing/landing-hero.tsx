@@ -13,7 +13,7 @@ export function LandingHero() {
             Know what it&apos;s really like to work there.
           </h1>
           <p className="max-w-xl text-lg leading-relaxed text-[#6B7280]">
-            JobHunch helps you discover honest workplace reviews, find vetted jobs, and track your applications — all in
+            JobHunch helps you discover honest workplace reviews, find vetted jobs, and track your applications, all in
             one place, built for Nigeria and Africa.
           </p>
           <div className="flex flex-wrap gap-3">
