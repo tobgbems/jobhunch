@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "JobHunch",
   description: "Anonymous workplace reviews and jobs for Africa.",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.ico",
   },
 };
 
