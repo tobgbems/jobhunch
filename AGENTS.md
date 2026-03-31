@@ -44,10 +44,13 @@ Migrations live in **`supabase/migrations/`**. Apply via Supabase CLI or paste i
 | `20260327120000_seed_jobs_nigeria.sql` | Seeds **15** Nigerian job rows (also duplicated for manual run in `supabase/seed_jobs_manual.sql` if present) |
 | `20260327240000_job_applications_location_job_type.sql` | Adds **`location`** and **`job_type`** to `job_applications` + check constraint; ends with `NOTIFY pgrst, 'reload schema'` for PostgREST |
 | `20260330153000_companies_add_size.sql` | Adds optional **`size`** column on `companies` for public company profile display + PostgREST schema reload |
+| `20260331110000_profiles_legacy_bubble_linking.sql` | Prepares `profiles` for legacy Bubble users: adds `email`, `first_name`, `last_name`, `imported_from_bubble`, `source`; removes hard FK on `profiles.id`; updates `handle_new_user()` to link by email before insert |
 
 **RLS summary:** Users own their `profiles` and `job_applications`; `reviews` are readable by all, writable by owner; `jobs` / `companies` readable broadly; inserts to `jobs` restricted to service role; review reads for the app use **`public_reviews`**, not raw `reviews`, so anonymous reviews never leak identity in list/detail UIs.
 
 **Important:** If the app errors on missing columns (`location`, `job_type`) or schema cache for `job_applications`, the latest migration above must be applied in Supabase.
+
+One-time legacy user import script: `scripts/migrate-bubble-users.ts` (service-role only). It pre-seeds Bubble users in `profiles` and relies on `handle_new_user()` to attach `auth.users.id` on first sign-in by matching `email`.
 
 ## Frontend routes (App Router)
 
@@ -101,4 +104,4 @@ When shipping a feature or changing schema:
 
 ---
 
-*Last updated: 2026-03-30 — production domain **thejobhunch.com**; `lib/site-url.ts` for auth base URL; `next.config.mjs` image `remotePatterns`; favicon served from `public/favicon.ico` with `metadata.icons` in `app/layout.tsx`; public SSR company pages at `/company/[slug]`.*
+*Last updated: 2026-03-31 — added legacy Bubble user profile migration + auth email-linking trigger flow (`20260331110000_profiles_legacy_bubble_linking.sql`) and one-time import script `scripts/migrate-bubble-users.ts`; production domain **thejobhunch.com**; `lib/site-url.ts` for auth base URL; `next.config.mjs` image `remotePatterns`; favicon served from `public/favicon.ico` with `metadata.icons` in `app/layout.tsx`; public SSR company pages at `/company/[slug]`.*

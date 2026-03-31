@@ -19,6 +19,7 @@ This file gives Claude (and humans) a concise technical and product overview. **
 2. Copy `.env.example` → `.env.local` and set Supabase URL, anon key, and `NEXT_PUBLIC_SITE_URL` (production: **`https://thejobhunch.com`**; local dev: **`http://localhost:3000`**).
 3. Run SQL migrations in Supabase (see `supabase/migrations/`, chronological order).
 4. `npm run dev` → http://localhost:3000
+5. One-time Bubble user import: add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local`, apply latest migration, then run `npx tsx scripts/migrate-bubble-users.ts`
 
 **Production site:** [https://thejobhunch.com](https://thejobhunch.com)
 
@@ -38,6 +39,7 @@ This file gives Claude (and humans) a concise technical and product overview. **
 - **View:** `public_reviews` — safe reviewer display; includes **`is_owner`** for UI ownership checks
 - **Enum:** `job_application_status`
 - **Trigger:** new auth users get a `profiles` row (plus backfill migration for legacy users)
+- **Legacy auth linking:** pre-seeded Bubble users are stored in `profiles` and matched by `email` when auth users sign in the first time.
 
 Exact migration filenames and purposes are listed in **`AGENTS.md`** (single source of detail).
 
@@ -69,4 +71,4 @@ Exact migration filenames and purposes are listed in **`AGENTS.md`** (single sou
 
 ---
 
-*Last updated: 2026-03-30 — production domain thejobhunch.com, `lib/site-url.ts` for auth base URL, favicon served from `public/favicon.ico` via `app/layout.tsx` metadata, and SSR public company pages at `/company/[slug]`.*
+*Last updated: 2026-03-31 — added Bubble legacy user pre-seeding in `profiles` with email-based linking in `handle_new_user()`, plus one-time script `scripts/migrate-bubble-users.ts`; production domain thejobhunch.com, `lib/site-url.ts` for auth base URL, favicon served from `public/favicon.ico` via `app/layout.tsx` metadata, and SSR public company pages at `/company/[slug]`.*
