@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 type BubbleUser = {
   email: string;
@@ -44,12 +44,12 @@ function parseBubbleUsersFromPrompt(): BubbleUser[] {
   }
 
   const prompt = fs.readFileSync(promptPath, "utf8");
-  const match = prompt.match(/const BUBBLE_USERS = \[(?<rows>[\s\S]*?)\];/);
-  if (!match?.groups?.rows) {
+  const match = prompt.match(/const BUBBLE_USERS = \[([\s\S]*?)\];/);
+  if (!match?.[1]) {
     throw new Error("Could not parse BUBBLE_USERS from cursor_prompt_bubble_user_migration.md");
   }
 
-  const arrayText = `[${match.groups.rows}]`;
+  const arrayText = `[${match[1]}]`;
   const parsed = vm.runInNewContext(arrayText, {});
   if (!Array.isArray(parsed)) {
     throw new Error("Parsed BUBBLE_USERS is not an array.");
@@ -60,11 +60,7 @@ function parseBubbleUsersFromPrompt(): BubbleUser[] {
 
 const BUBBLE_USERS: BubbleUser[] = parseBubbleUsersFromPrompt();
 
-async function columnExists(
-  supabase: ReturnType<typeof createClient>,
-  table: string,
-  column: string
-) {
+async function columnExists(supabase: SupabaseClient, table: string, column: string) {
   const { error } = await supabase.from(table).select(column).limit(1);
   if (!error) return true;
 
