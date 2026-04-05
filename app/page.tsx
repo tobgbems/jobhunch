@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import { LandingCtaBanner } from "@/components/landing/landing-cta-banner";
+
+export const metadata: Metadata = {
+  title: "JobHunch – Honest company reviews across Africa",
+  description:
+    "Discover anonymous workplace reviews, browse jobs, and track applications. Built for professionals in Nigeria and across Africa.",
+};
 import { LandingFeatures } from "@/components/landing/landing-features";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { LandingHero } from "@/components/landing/landing-hero";

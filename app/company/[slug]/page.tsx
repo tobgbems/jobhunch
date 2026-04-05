@@ -15,6 +15,7 @@ type Company = {
   location: string | null;
   website: string | null;
   size: string | null;
+  description: string | null;
 };
 
 type Review = {
@@ -69,6 +70,16 @@ function normalizeUrl(url: string | null) {
   return `https://${url}`;
 }
 
+const META_DESC_MAX = 160;
+
+function truncateMetaDescription(text: string, max = META_DESC_MAX) {
+  const t = text.trim().replace(/\s+/g, " ");
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trimEnd() + "…";
+}
+
 function computeStats(reviews: Review[]) {
   if (!reviews.length) {
     return {
@@ -108,7 +119,7 @@ async function getCompanyData(slug: string) {
 
   const { data: company } = await supabase
     .from("companies")
-    .select("id,name,slug,industry,location,website,size")
+    .select("id,name,slug,industry,location,website,size,description")
     .eq("slug", slug)
     .maybeSingle<Company>();
 
@@ -147,9 +158,30 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   const { company, reviews } = companyData;
   const count = reviews.length;
+  const fallbackDescription = `Read anonymous employee reviews for ${company.name}. ${count} review${count === 1 ? "" : "s"} from current and former employees.`;
+  const description =
+    company.description && company.description.trim().length > 0
+      ? truncateMetaDescription(company.description)
+      : fallbackDescription;
+
+  const title = `${company.name} Reviews – JobHunch`;
+
   return {
-    title: `${company.name} Reviews | JobHunch`,
-    description: `Read anonymous employee reviews for ${company.name}. ${count} review${count === 1 ? "" : "s"} from current and former employees.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: `https://thejobhunch.com/company/${encodeURIComponent(company.slug)}`,
+      images: [{ url: "/og-image.png" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/og-image.png"],
+    },
   };
 }
 
