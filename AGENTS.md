@@ -46,8 +46,12 @@ Migrations live in **`supabase/migrations/`**. Apply via Supabase CLI or paste i
 | `20260330153000_companies_add_size.sql` | Adds optional **`size`** column on `companies` for public company profile display + PostgREST schema reload |
 | `20260331110000_profiles_legacy_bubble_linking.sql` | Prepares `profiles` for legacy Bubble users: adds `email`, `first_name`, `last_name`, `imported_from_bubble`, `source`; removes hard FK on `profiles.id`; updates `handle_new_user()` to link by email before insert |
 | `20260410120000_jobs_status_and_detail_fields.sql` | Adds **`jobs.status`** (`open` / `closed` / `draft`, default `open`), **`salary_range`**, **`responsibilities`**, **`requirements`**; index on `(status, posted_at)`; PostgREST reload |
+| `20260411120000_jobs_last_seen_apply_url_unique.sql` | Adds **`jobs.last_seen_at`**; partial unique index **`jobs_apply_url_unique_idx`** on **`apply_url`** (for PostgREST upsert / scraper dedupe); `NOTIFY pgrst, 'reload schema'`. If duplicates block the index, see **README → Job Scraping → Troubleshooting** (dedupe + `UNIQUE (apply_url)` constraint). |
+| `20260412120000_admin_profiles_is_admin_jobs_rls.sql` | Adds **`profiles.is_admin`** (default `false`); extends **`jobs.status`** with **`deleted`** (soft delete); extends **`jobs.job_type`** with **`hybrid`**; replaces **`jobs` RLS**: rows with **`status = deleted`** hidden from non-admins; **`INSERT`/`UPDATE` on `jobs`** for **`authenticated`** users with **`is_admin = true`**; service-role scraper unchanged (bypasses RLS); replaces **`jobs_apply_url_unique_idx`** so uniqueness applies only when **`status` is not `deleted`** (reuse of `apply_url` after soft delete). Includes commented SQL to promote an owner by **`profiles.email`**. |
 
-**RLS summary:** Users own their `profiles` and `job_applications`; `reviews` are readable by all, writable by owner; `jobs` / `companies` readable broadly; inserts to `jobs` restricted to service role; review reads for the app use **`public_reviews`**, not raw `reviews`, so anonymous reviews never leak identity in list/detail UIs.
+**RLS summary:** Users own their `profiles` and `job_applications`; `reviews` are readable by all, writable by owner; **`jobs`**: anon/authenticated **SELECT** returns non-deleted rows for everyone; **admins** (`profiles.is_admin`) also see **deleted**; **`INSERT`/`UPDATE` on `jobs`** allowed for **service role** (scraper) and for **authenticated admins**; no **`DELETE`** policy on **`jobs`** for the anon key (soft delete via **`UPDATE`** only); **`companies`** readable broadly; review reads for the app use **`public_reviews`**, not raw **`reviews`**, so anonymous reviews never leak identity in list/detail UIs.
+
+**Admin access:** Apply the migration, then run once in the SQL Editor: `update public.profiles set is_admin = true where lower(btrim(email)) = lower('owner@example.com');` (user must have signed in so `profiles.id` matches auth). Open **`/admin/jobs`** while signed in as that user. Non-admins and logged-out users are **redirected to `/`** (`lib/require-admin.ts`, `app/admin/layout.tsx`). Admin URLs are **not** linked from the public or dashboard nav.
 
 **Important:** If the app errors on missing columns (`location`, `job_type`) or schema cache for `job_applications`, the latest migration above must be applied in Supabase.
 
@@ -75,6 +79,11 @@ One-time legacy user import script: `scripts/migrate-bubble-users.ts` (service-r
 | `/dashboard/jobs` | Job board (`components/jobs/JobBoard.tsx`) — filters, pagination, detail dialog, **Save to tracker** |
 | `/dashboard/applications` | Application tracker (`components/applications/ApplicationsTracker.tsx`) |
 | `/dashboard/profile` | Placeholder |
+| `/admin` | Redirects to **`/admin/jobs`** |
+| `/admin/jobs` | Owner-only job admin: table (filters, pagination), add/edit, toggle open/closed, soft delete (`status = deleted`). Dark shell in **`app/admin/layout.tsx`**. Server actions: **`app/admin/jobs/actions.ts`**. |
+| `/admin/jobs/new` | Create manual job (`source = manual`, `last_seen_at` set). |
+| `/admin/jobs/[id]/edit` | Edit job (restores from **deleted** by setting status to open/closed/draft). |
+| `/admin/reviews`, `/admin/companies` | Placeholders (“coming soon”). |
 | `/company/[slug]` | Public, crawlable company page with SSR metadata (`generateMetadata`: title `"{Name} Reviews – JobHunch"`, description from `companies.description` with review-count fallback), rating summaries, reviews (pros/cons blurred for logged-out users), and open jobs (links to **`/jobs/[id]`** + apply) |
 
 ## SEO & Google Search Console
@@ -93,7 +102,7 @@ One-time legacy user import script: `scripts/migrate-bubble-users.ts` (service-r
 ## Domain concepts
 
 - **`job_application_status`**: `saved` | `applied` | `interview` | `offer` | `rejected`.
-- **Jobs:** `job_type` values align with DB check: `full-time`, `part-time`, `contract`, `remote`; some listings use `location = 'Remote'` with `full-time` job type. **`status`**: `open` (shown on public `/jobs` + sitemap), `closed`, `draft`. Optional detail fields: `salary_range`, `responsibilities`, `requirements`.
+- **Jobs:** `job_type` values align with DB check: `full-time`, `part-time`, `contract`, `remote`, **`hybrid`**. **`status`**: `open` (shown on public `/jobs` + sitemap), `closed`, `draft`, **`deleted`** (soft delete; hidden from public and from non-admin reads via RLS). Optional detail fields: `salary_range`, `responsibilities`, `requirements`.
 - **Reviews:** Insert/update use `reviews` table; **always read** via **`public_reviews`** for listing/detail. Wizard uses native controls where Base UI was unreliable (employment status, etc.).
 
 ## Pitfalls & ops
@@ -102,6 +111,7 @@ One-time legacy user import script: `scripts/migrate-bubble-users.ts` (service-r
 - **Windows / Watchpack:** Harmless warnings scanning `C:\` system files sometimes appear; not app bugs.
 - **Supabase schema cache:** After DDL changes, migration `20260327240000...` includes `NOTIFY pgrst, 'reload schema'`. If API still lags, wait a minute or reload from Supabase dashboard.
 - **Favicon conflicts in App Router:** Do not keep both `app/favicon.ico` and `public/favicon.ico`. This causes `500` with “conflicting public file and page file” on `/favicon.ico`. Prefer `public/favicon.ico` and set `metadata.icons.icon` in `app/layout.tsx`.
+- **Job scraper / `42P10`:** The Python pipeline ([`scripts/scrape_jobs.py`](scripts/scrape_jobs.py), [`.github/workflows/scrape-jobs.yml`](.github/workflows/scrape-jobs.yml)) upserts on **`apply_url`**, which requires a **unique** index or constraint on that column. If Supabase returns **`42P10`** (*no unique or exclusion constraint matching the ON CONFLICT specification*), dedupe rows and add uniqueness — see **README → Job Scraping → Troubleshooting**.
 
 ## What to preserve when changing code
 
@@ -118,4 +128,4 @@ When shipping a feature or changing schema:
 
 ---
 
-*Last updated: 2026-04-10 — Public `/jobs/[id]`, jobs `status` + detail columns migration, sitemap per-job URLs, landing nav/footer → `/jobs`, auth `next` return path. Prior: SEO baseline, `/company/[slug]`, legacy Bubble migration.*
+*Last updated: 2026-04-10 — Admin `/admin/jobs` (owner `profiles.is_admin`, RLS, soft delete, hybrid job type), migration `20260412120000`. Prior: job scraper, `20260411120000`, public `/jobs/[id]`.*

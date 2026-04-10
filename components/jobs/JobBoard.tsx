@@ -56,6 +56,7 @@ const JOB_TYPE_OPTIONS = [
   { value: "part-time", label: "Part-time" },
   { value: "contract", label: "Contract" },
   { value: "remote", label: "Remote" },
+  { value: "hybrid", label: "Hybrid" },
 ] as const;
 
 const LOCATION_OPTIONS = [
@@ -73,6 +74,7 @@ function formatJobTypeLabel(t: string | null) {
     "part-time": "Part-time",
     contract: "Contract",
     remote: "Remote",
+    hybrid: "Hybrid",
   };
   return map[t] ?? t;
 }
@@ -145,6 +147,7 @@ export function JobBoard() {
       const { data, error } = await supabase
         .from("jobs")
         .select("id,company_id,company_name,title,location,job_type,apply_url,source,posted_at,companies(slug)")
+        .neq("status", "deleted")
         .order("posted_at", { ascending: false });
       if (cancelled) return;
       if (error) {

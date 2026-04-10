@@ -37,6 +37,7 @@ function formatJobType(type: string | null) {
     "part-time": "Part-time",
     contract: "Contract",
     remote: "Remote",
+    hybrid: "Hybrid",
   };
   return map[type] ?? type;
 }

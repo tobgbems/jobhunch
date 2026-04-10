@@ -41,7 +41,47 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 A Python script pulls listings from Nigerian job boards (Jobberman, MyJobMag), upserts them into Supabase on `apply_url`, and closes listings that have not been seen in 14 days. Rows with `source = 'manual'` are never auto-closed.
 
-**Prerequisites:** Apply the migration that adds `last_seen_at` and the partial unique index on `apply_url` (`supabase/migrations/20260411120000_jobs_last_seen_apply_url_unique.sql`).
+**Prerequisites:** The scraper needs `jobs.last_seen_at` and **uniqueness on `apply_url`** so PostgREST can upsert with `on_conflict=apply_url`. Apply [`supabase/migrations/20260411120000_jobs_last_seen_apply_url_unique.sql`](supabase/migrations/20260411120000_jobs_last_seen_apply_url_unique.sql), which adds `last_seen_at` and a partial unique index `jobs_apply_url_unique_idx`. A table-level `UNIQUE (apply_url)` constraint (see troubleshooting below) is an equivalent alternative.
+
+### Troubleshooting: Upsert fails with `42P10` (GitHub Actions or local)
+
+If the scraper or GitHub Actions logs show PostgreSQL **`42P10`** — *there is no unique or exclusion constraint matching the ON CONFLICT specification* — PostgREST does not see a unique index or constraint on `apply_url`. That often happens when **`CREATE UNIQUE INDEX` never completed** because **duplicate non-null `apply_url` rows** already existed.
+
+Run this in the **Supabase SQL Editor** (same project as `SUPABASE_URL` in secrets):
+
+**1. Remove duplicates, keeping the newest row per `apply_url`:**
+
+```sql
+-- Clean duplicates keeping newest
+DELETE FROM public.jobs
+WHERE id IN (
+  SELECT id FROM (
+    SELECT id,
+      ROW_NUMBER() OVER (
+        PARTITION BY apply_url ORDER BY created_at DESC
+      ) AS rn
+    FROM public.jobs
+    WHERE apply_url IS NOT NULL
+  ) dupes
+  WHERE rn > 1
+);
+```
+
+**2. Ensure a unique definition on `apply_url`** (drops the migration’s partial index name if present, then adds a constraint — Postgres enforces uniqueness and PostgREST upserts work):
+
+```sql
+-- First drop the existing index
+DROP INDEX IF EXISTS public.jobs_apply_url_unique_idx;
+
+-- Create a proper constraint instead (this also creates an index under the hood)
+ALTER TABLE public.jobs
+ADD CONSTRAINT jobs_apply_url_unique
+UNIQUE (apply_url);
+
+NOTIFY pgrst, 'reload schema';
+```
+
+If the partial index from the migration **never** existed, `DROP INDEX IF EXISTS` is harmless. If you used a different index name, adjust the `DROP` line accordingly. Skip the `ALTER TABLE ... ADD CONSTRAINT` if `jobs_apply_url_unique` already exists.
 
 ### Run locally
 

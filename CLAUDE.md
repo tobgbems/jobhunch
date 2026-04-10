@@ -34,10 +34,12 @@ This file gives Claude (and humans) a concise technical and product overview. **
 7. **Public company pages** — `/company/[slug]`: server-rendered, SEO metadata per company (`generateMetadata` uses `companies.description` when set, with fallback copy), public company details + rating aggregates + reviews + open jobs; review pros/cons blur for logged-out users with sign-in prompt.
 8. **SEO / GSC** — `app/robots.ts` (allow all; sitemap URL), `app/sitemap.ts` (dynamic: static URLs + company slugs + **open job ids** → `/jobs/[id]`; Supabase server `createClient()`, `dynamic = "force-dynamic"`). Root `metadata` in `app/layout.tsx`. Public listings: `/companies`, `/jobs` (SSR job board + filters), **`/jobs/[id]`** (job detail + metadata). `/login` and `/signup` redirect to `/auth`.
 9. **Public jobs** — `/jobs` and `/jobs/[id]`: server-fetched open listings, client filters on the index, Apply + Track (tracker insert when signed in; **`/auth?next=...`** when logged out). Company page open roles link to `/jobs/[id]`.
+10. **Job scraping (scheduled)** — Python [`scripts/scrape_jobs.py`](scripts/scrape_jobs.py) upserts listings into `jobs` via the service role; GitHub Actions [`.github/workflows/scrape-jobs.yml`](.github/workflows/scrape-jobs.yml) runs on a cron + `workflow_dispatch`. CI/local env: **`SUPABASE_URL`**, **`SUPABASE_SERVICE_ROLE_KEY`**. See **README → Job Scraping** (setup + **`42P10`** troubleshooting).
+11. **Admin job management** — Owner-only **`/admin/jobs`** (and placeholders **`/admin/reviews`**, **`/admin/companies`**): dark admin shell, CRUD via server actions, soft delete (`jobs.status = deleted`), toggle open/closed. Gate: **`profiles.is_admin`** + **`requireAdmin()`** in **`lib/require-admin.ts`**. Not linked from public or user dashboard nav. **Access:** apply migration `20260412120000_admin_profiles_is_admin_jobs_rls.sql`, run `update public.profiles set is_admin = true where lower(btrim(email)) = lower('you@example.com');` once, sign in, open **`/admin/jobs`**.
 
 ## Database artifacts
 
-- **Tables:** `profiles`, `companies` (includes optional `size`), `reviews`, `jobs` (includes **`status`** `open|closed|draft`, **`salary_range`**, **`responsibilities`**, **`requirements`**), `job_applications`
+- **Tables:** `profiles` (includes **`is_admin`**), `companies` (includes optional `size`), `reviews`, `jobs` (includes **`status`** `open|closed|draft|deleted`, **`job_type`** includes **`hybrid`**, **`salary_range`**, **`responsibilities`**, **`requirements`**, **`last_seen_at`**; **`apply_url`** unique among non-deleted rows for scraper upserts / admin re-add), `job_applications`
 - **View:** `public_reviews` — safe reviewer display; includes **`is_owner`** for UI ownership checks
 - **Enum:** `job_application_status`
 - **Trigger:** new auth users get a `profiles` row (plus backfill migration for legacy users)
@@ -69,13 +71,18 @@ Exact migration filenames and purposes are listed in **`AGENTS.md`** (single sou
 | Public jobs UI | `components/jobs/PublicJobsList.tsx`, `components/jobs/TrackJobButton.tsx` |
 | Auth return path helper | `lib/auth-redirect.ts` |
 | Applications UI | `components/applications/ApplicationsTracker.tsx` |
+| Job scraper (Python) | `scripts/scrape_jobs.py` |
+| Job scraper (CI schedule) | `.github/workflows/scrape-jobs.yml` |
+| Admin gate | `lib/require-admin.ts` |
+| Admin jobs UI & actions | `app/admin/*`, `app/admin/jobs/actions.ts`, `components/admin/*` |
 
 ## Operational notes
 
 - If Next dev fails with missing `./NNN.js` chunks: delete **`.next`**, restart `npm run dev`.
 - After altering tables, ensure migrations are applied; `job_applications` **requires** `location` and `job_type` columns for current app code — see migration `20260327240000_job_applications_location_job_type.sql`.
 - Keep favicon in `public/favicon.ico` and avoid `app/favicon.ico` to prevent App Router path conflicts (`/favicon.ico` 500).
+- Scraper upserts failing with PostgreSQL **`42P10`** usually mean missing uniqueness on **`apply_url`** (often duplicate URLs blocked index creation). Fix: **README → Job Scraping → Troubleshooting**.
 
 ---
 
-*Last updated: 2026-04-10 — public `/jobs/[id]`, jobs status/detail migration, sitemap job URLs, landing links to `/jobs`, auth `next` redirect. Prior: SEO/GSC, `/company/[slug]`, Bubble legacy `profiles` linking.*
+*Last updated: 2026-04-10 — Admin `/admin/jobs`, `profiles.is_admin`, jobs RLS + soft delete + hybrid type, migration `20260412120000`. Prior: job scraper, `last_seen_at` / `apply_url` uniqueness, public `/jobs/[id]`.*

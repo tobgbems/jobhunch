@@ -32,6 +32,7 @@ const JOB_TYPE_OPTIONS = [
   { value: "part-time", label: "Part-time" },
   { value: "contract", label: "Contract" },
   { value: "remote", label: "Remote" },
+  { value: "hybrid", label: "Hybrid" },
 ] as const;
 
 const ALL_INDUSTRY = "all";
@@ -44,6 +45,7 @@ function formatJobType(type: string | null) {
     "part-time": "Part-time",
     contract: "Contract",
     remote: "Remote",
+    hybrid: "Hybrid",
   };
   return map[type] ?? type;
 }
