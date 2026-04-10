@@ -417,7 +417,7 @@ export function JobBoard() {
           <DialogContent
             showCloseButton={false}
             className={cn(
-              "!fixed !inset-y-0 !top-0 !right-0 !bottom-0 !left-auto z-50 !h-full !max-h-full !w-full !max-w-md !translate-x-0 !translate-y-0 gap-0 rounded-none border-0 border-l border-[#E5E7EB] bg-white p-0 shadow-[0_8px_32px_rgba(0,0,0,0.12)] sm:rounded-l-2xl",
+              "!fixed !inset-y-0 !top-0 !right-0 !bottom-0 !left-auto z-[80] !h-full !max-h-full !w-full !max-w-md !translate-x-0 !translate-y-0 gap-0 rounded-none border-0 border-l border-[#E5E7EB] bg-white p-0 shadow-[0_8px_32px_rgba(0,0,0,0.12)] sm:rounded-l-2xl",
             )}
           >
             <div className="flex h-full flex-col overflow-y-auto p-6">

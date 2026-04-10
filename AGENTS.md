@@ -27,8 +27,8 @@ Create `.env.local` from `.env.example` (if present):
 ## Authentication
 
 - **Google OAuth** and **magic link** (email) via Supabase Auth — no passwords.
-- Redirect URLs use **`${origin}/auth/callback`** where `origin` is `headers().get("origin")` when present, else **`getSiteUrl()`** from `lib/site-url.ts` (reads `NEXT_PUBLIC_SITE_URL`). **Supabase Dashboard → Authentication → URL configuration** must include `https://thejobhunch.com` and (for local testing) `http://localhost:3000`.
-- Post-login default redirect: **`/dashboard`** (`app/auth/actions.ts`, `app/auth/callback/route.ts`).
+- Redirect URLs use **`${getSiteUrl()}/auth/callback`** (and optional **`?next=`** for return paths) from `app/auth/actions.ts`. **Supabase Dashboard → Authentication → URL configuration** must include `https://thejobhunch.com` and (for local testing) `http://localhost:3000`. If OAuth rejects unknown redirect URLs, ensure callback URLs with query strings are allowed (or add the exact `.../auth/callback?next=...` patterns Supabase expects).
+- Post-login redirect: **`/dashboard`** by default; **`/auth?next=/path`** passes through OAuth/magic-link `redirectTo` so users return to e.g. **`/jobs/[id]`** after sign-in (`lib/auth-redirect.ts` + `app/auth/callback/route.ts`).
 - **Middleware** refreshes the Supabase session (`middleware.ts`, `lib/supabase/middleware.ts`) — no hardcoded site URLs.
 - Browser client: `lib/supabase/client.ts`; server client: `lib/supabase/server.ts`.
 
@@ -45,6 +45,7 @@ Migrations live in **`supabase/migrations/`**. Apply via Supabase CLI or paste i
 | `20260327240000_job_applications_location_job_type.sql` | Adds **`location`** and **`job_type`** to `job_applications` + check constraint; ends with `NOTIFY pgrst, 'reload schema'` for PostgREST |
 | `20260330153000_companies_add_size.sql` | Adds optional **`size`** column on `companies` for public company profile display + PostgREST schema reload |
 | `20260331110000_profiles_legacy_bubble_linking.sql` | Prepares `profiles` for legacy Bubble users: adds `email`, `first_name`, `last_name`, `imported_from_bubble`, `source`; removes hard FK on `profiles.id`; updates `handle_new_user()` to link by email before insert |
+| `20260410120000_jobs_status_and_detail_fields.sql` | Adds **`jobs.status`** (`open` / `closed` / `draft`, default `open`), **`salary_range`**, **`responsibilities`**, **`requirements`**; index on `(status, posted_at)`; PostgREST reload |
 
 **RLS summary:** Users own their `profiles` and `job_applications`; `reviews` are readable by all, writable by owner; `jobs` / `companies` readable broadly; inserts to `jobs` restricted to service role; review reads for the app use **`public_reviews`**, not raw `reviews`, so anonymous reviews never leak identity in list/detail UIs.
 
@@ -60,6 +61,12 @@ One-time legacy user import script: `scripts/migrate-bubble-users.ts` (service-r
 | `/auth` | Sign-in |
 | `/auth/callback` | OAuth / magic-link exchange |
 | `/privacy`, `/terms` | Placeholder legal pages (`components/landing/legal-page-shell.tsx`) |
+| `/login`, `/signup` | Redirect to `/auth` (SEO-friendly paths for sitemap / links) |
+| `/companies` | Public company directory (SSR); links to `/company/[slug]` |
+| `/jobs` | Public job board (SSR + `revalidate`, `PublicJobsList` client filters); lists **`status = open`** only; cards link to **`/jobs/[id]`** and company profile |
+| `/jobs/[id]` | Public job detail (SSR + `generateMetadata`); Apply (external) + **Track** → `job_applications` when signed in, else **`/auth?next=/jobs/[id]`** |
+| `/robots.txt` | `app/robots.ts` — allow all crawlers; sitemap URL `https://thejobhunch.com/sitemap.xml` |
+| `/sitemap.xml` | `app/sitemap.ts` — dynamic sitemap (`export const dynamic = "force-dynamic"`) using `createClient()` from `lib/supabase/server.ts`; static URLs + every `companies.slug` → `/company/[slug]` + every open job `jobs.id` → `/jobs/[id]` |
 | `/dashboard` | Shell: sidebar + mobile header (`app/dashboard/layout.tsx`) |
 | `/dashboard/reviews` | Company discovery; links to `/dashboard/reviews/[slug]` |
 | `/dashboard/reviews/new` | Multi-step review wizard (`components/reviews/ReviewWizard.tsx`) |
@@ -68,7 +75,14 @@ One-time legacy user import script: `scripts/migrate-bubble-users.ts` (service-r
 | `/dashboard/jobs` | Job board (`components/jobs/JobBoard.tsx`) — filters, pagination, detail dialog, **Save to tracker** |
 | `/dashboard/applications` | Application tracker (`components/applications/ApplicationsTracker.tsx`) |
 | `/dashboard/profile` | Placeholder |
-| `/company/[slug]` | Public, crawlable company page with SSR metadata, rating summaries, reviews (pros/cons blurred for logged-out users), and open jobs |
+| `/company/[slug]` | Public, crawlable company page with SSR metadata (`generateMetadata`: title `"{Name} Reviews – JobHunch"`, description from `companies.description` with review-count fallback), rating summaries, reviews (pros/cons blurred for logged-out users), and open jobs (links to **`/jobs/[id]`** + apply) |
+
+## SEO & Google Search Console
+
+- **Root metadata** — `app/layout.tsx`: `metadataBase` `https://thejobhunch.com`, default title/description, Open Graph + Twitter (`/og-image.png` placeholder until the asset exists in `public/`).
+- **Per-page metadata** — `app/page.tsx`, `app/companies/page.tsx`, `app/jobs/page.tsx`; company pages as above.
+- **Sitemap** — `app/sitemap.ts` lists static routes (`/`, `/companies`, `/jobs`, `/login`, `/signup`), all company profile URLs, and **open** job URLs `https://thejobhunch.com/jobs/{id}` (`jobs.status = open`).
+- **Crawlers** — `app/robots.ts` allows `/` for all user agents and points to the production sitemap URL.
 
 ## UI / brand conventions (dashboard & product)
 
@@ -79,7 +93,7 @@ One-time legacy user import script: `scripts/migrate-bubble-users.ts` (service-r
 ## Domain concepts
 
 - **`job_application_status`**: `saved` | `applied` | `interview` | `offer` | `rejected`.
-- **Jobs:** `job_type` values align with DB check: `full-time`, `part-time`, `contract`, `remote`; some listings use `location = 'Remote'` with `full-time` job type.
+- **Jobs:** `job_type` values align with DB check: `full-time`, `part-time`, `contract`, `remote`; some listings use `location = 'Remote'` with `full-time` job type. **`status`**: `open` (shown on public `/jobs` + sitemap), `closed`, `draft`. Optional detail fields: `salary_range`, `responsibilities`, `requirements`.
 - **Reviews:** Insert/update use `reviews` table; **always read** via **`public_reviews`** for listing/detail. Wizard uses native controls where Base UI was unreliable (employment status, etc.).
 
 ## Pitfalls & ops
@@ -104,4 +118,4 @@ When shipping a feature or changing schema:
 
 ---
 
-*Last updated: 2026-03-31 — added legacy Bubble user profile migration + auth email-linking trigger flow (`20260331110000_profiles_legacy_bubble_linking.sql`) and one-time import script `scripts/migrate-bubble-users.ts`; production domain **thejobhunch.com**; `lib/site-url.ts` for auth base URL; `next.config.mjs` image `remotePatterns`; favicon served from `public/favicon.ico` with `metadata.icons` in `app/layout.tsx`; public SSR company pages at `/company/[slug]`.*
+*Last updated: 2026-04-10 — Public `/jobs/[id]`, jobs `status` + detail columns migration, sitemap per-job URLs, landing nav/footer → `/jobs`, auth `next` return path. Prior: SEO baseline, `/company/[slug]`, legacy Bubble migration.*

@@ -1,11 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
-
-function safeNextParam(next: string | null): string {
-  if (!next) return "/dashboard";
-  if (!next.startsWith("/") || next.startsWith("//")) return "/dashboard";
-  return next;
-}
+import { safeNextParam } from "@/lib/auth-redirect";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/server";
+import { safeNextParam } from "@/lib/auth-redirect";
 import { signInWithGoogle, signInWithMagicLink } from "./actions";
 
 type AuthPageProps = {
@@ -13,6 +14,7 @@ type AuthPageProps = {
     error?: string;
     success?: string;
     email?: string;
+    next?: string;
   };
 };
 
@@ -55,8 +57,11 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
   const isMagicLinkSent = searchParams.success === "magic_link_sent";
 
   if (user) {
-    redirect("/dashboard");
+    redirect(safeNextParam(searchParams.next));
   }
+
+  const nextParam = searchParams.next ? safeNextParam(searchParams.next) : "";
+  const nextHiddenValue = nextParam && nextParam !== "/dashboard" ? nextParam : "";
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] text-[#0D0D0D] reviews-light antialiased">
@@ -109,6 +114,7 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
               )}
 
               <form action={signInWithGoogle}>
+                {nextHiddenValue ? <input type="hidden" name="next" value={nextHiddenValue} /> : null}
                 <Button
                   type="submit"
                   variant="outline"
@@ -130,6 +136,7 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
               </div>
 
               <form action={signInWithMagicLink} className="space-y-3">
+                {nextHiddenValue ? <input type="hidden" name="next" value={nextHiddenValue} /> : null}
                 <Input
                   name="email"
                   type="email"

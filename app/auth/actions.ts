@@ -2,17 +2,26 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { safeNextParam } from "@/lib/auth-redirect";
 import { getSiteUrl } from "@/lib/site-url";
 
-const authCallbackUrl = () => `${getSiteUrl()}/auth/callback`;
+function authCallbackUrl(formData?: FormData) {
+  const base = `${getSiteUrl()}/auth/callback`;
+  if (!formData) return base;
+  const raw = String(formData.get("next") ?? "").trim();
+  if (!raw) return base;
+  const next = safeNextParam(raw);
+  if (next === "/dashboard") return base;
+  return `${base}?next=${encodeURIComponent(next)}`;
+}
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(formData: FormData) {
   const supabase = createClient();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: authCallbackUrl(),
+      redirectTo: authCallbackUrl(formData),
     },
   });
 
@@ -34,7 +43,7 @@ export async function signInWithMagicLink(formData: FormData) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: authCallbackUrl(),
+      emailRedirectTo: authCallbackUrl(formData),
     },
   });
 
@@ -42,5 +51,10 @@ export async function signInWithMagicLink(formData: FormData) {
     redirect("/auth?error=magic_link_failed");
   }
 
-  redirect(`/auth?success=magic_link_sent&email=${encodeURIComponent(email)}`);
+  const rawNext = String(formData.get("next") ?? "").trim();
+  const next = rawNext ? safeNextParam(rawNext) : "";
+  const nextQs =
+    next && next !== "/dashboard" ? `&next=${encodeURIComponent(next)}` : "";
+
+  redirect(`/auth?success=magic_link_sent&email=${encodeURIComponent(email)}${nextQs}`);
 }

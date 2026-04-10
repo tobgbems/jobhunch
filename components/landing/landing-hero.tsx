@@ -29,6 +29,12 @@ export function LandingHero() {
             >
               Read reviews
             </Link>
+            <Link
+              href="/jobs"
+              className="inline-flex h-11 items-center justify-center rounded-lg border-2 border-[#E5E7EB] bg-white px-6 text-sm font-semibold text-[#0D0D0D] transition hover:border-[#27AE60]/40 hover:bg-[#F7F8FA]"
+            >
+              Browse jobs
+            </Link>
           </div>
           <p className="text-sm text-[#6B7280]">
             Join professionals reviewing companies across Nigeria and Africa

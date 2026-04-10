@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Briefcase, Building2, ListChecks, Shield } from "lucide-react";
 
 const features = [
@@ -43,6 +44,14 @@ export function LandingFeatures() {
               </div>
               <h3 className="mt-4 text-lg font-semibold text-[#0D0D0D]">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">{f.body}</p>
+              {i === 2 ? (
+                <Link
+                  href="/jobs"
+                  className="mt-4 inline-block text-sm font-semibold text-[#27AE60] underline-offset-4 hover:underline"
+                >
+                  Browse open roles →
+                </Link>
+              ) : null}
             </div>
           ))}
         </div>

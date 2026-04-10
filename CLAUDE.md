@@ -31,11 +31,13 @@ This file gives Claude (and humans) a concise technical and product overview. **
 4. **Reviews** — Company search/list, company detail by slug, `ReviewWizard` (create/edit), ratings, anonymity, reads from **`public_reviews`** view with `is_owner` for edit/delete.
 5. **Job board** — `/dashboard/jobs`: seeded listings, search/filters (client-side), pagination, job detail panel, **Save to tracker** → `job_applications` with `status: saved`.
 6. **Application tracker** — `/dashboard/applications`: stats, status tabs, cards, add/edit modal (native selects for reliability), delete confirm; joins **`jobs`** when `job_id` is set.
-7. **Public company pages** — `/company/[slug]`: server-rendered, SEO metadata per company, public company details + rating aggregates + reviews + open jobs; review pros/cons blur for logged-out users with sign-in prompt.
+7. **Public company pages** — `/company/[slug]`: server-rendered, SEO metadata per company (`generateMetadata` uses `companies.description` when set, with fallback copy), public company details + rating aggregates + reviews + open jobs; review pros/cons blur for logged-out users with sign-in prompt.
+8. **SEO / GSC** — `app/robots.ts` (allow all; sitemap URL), `app/sitemap.ts` (dynamic: static URLs + company slugs + **open job ids** → `/jobs/[id]`; Supabase server `createClient()`, `dynamic = "force-dynamic"`). Root `metadata` in `app/layout.tsx`. Public listings: `/companies`, `/jobs` (SSR job board + filters), **`/jobs/[id]`** (job detail + metadata). `/login` and `/signup` redirect to `/auth`.
+9. **Public jobs** — `/jobs` and `/jobs/[id]`: server-fetched open listings, client filters on the index, Apply + Track (tracker insert when signed in; **`/auth?next=...`** when logged out). Company page open roles link to `/jobs/[id]`.
 
 ## Database artifacts
 
-- **Tables:** `profiles`, `companies` (includes optional `size`), `reviews`, `jobs`, `job_applications`
+- **Tables:** `profiles`, `companies` (includes optional `size`), `reviews`, `jobs` (includes **`status`** `open|closed|draft`, **`salary_range`**, **`responsibilities`**, **`requirements`**), `job_applications`
 - **View:** `public_reviews` — safe reviewer display; includes **`is_owner`** for UI ownership checks
 - **Enum:** `job_application_status`
 - **Trigger:** new auth users get a `profiles` row (plus backfill migration for legacy users)
@@ -54,13 +56,18 @@ Exact migration filenames and purposes are listed in **`AGENTS.md`** (single sou
 
 | Area | Location |
 |------|-----------|
+| Robots.txt | `app/robots.ts` |
+| Dynamic sitemap | `app/sitemap.ts` |
+| Default site metadata (OG / Twitter) | `app/layout.tsx` |
 | Public site URL (auth fallbacks) | `lib/site-url.ts` (`getSiteUrl` → `NEXT_PUBLIC_SITE_URL`) |
 | Favicon metadata source | `app/layout.tsx` (`metadata.icons.icon`) |
 | Supabase browser client | `lib/supabase/client.ts` |
 | Supabase server client | `lib/supabase/server.ts` |
 | Dashboard layout & nav counts | `app/dashboard/layout.tsx` |
 | Review wizard | `components/reviews/ReviewWizard.tsx` |
-| Job board | `components/jobs/JobBoard.tsx` |
+| Job board (dashboard) | `components/jobs/JobBoard.tsx` |
+| Public jobs UI | `components/jobs/PublicJobsList.tsx`, `components/jobs/TrackJobButton.tsx` |
+| Auth return path helper | `lib/auth-redirect.ts` |
 | Applications UI | `components/applications/ApplicationsTracker.tsx` |
 
 ## Operational notes
@@ -71,4 +78,4 @@ Exact migration filenames and purposes are listed in **`AGENTS.md`** (single sou
 
 ---
 
-*Last updated: 2026-03-31 — added Bubble legacy user pre-seeding in `profiles` with email-based linking in `handle_new_user()`, plus one-time script `scripts/migrate-bubble-users.ts`; production domain thejobhunch.com, `lib/site-url.ts` for auth base URL, favicon served from `public/favicon.ico` via `app/layout.tsx` metadata, and SSR public company pages at `/company/[slug]`.*
+*Last updated: 2026-04-10 — public `/jobs/[id]`, jobs status/detail migration, sitemap job URLs, landing links to `/jobs`, auth `next` redirect. Prior: SEO/GSC, `/company/[slug]`, Bubble legacy `profiles` linking.*

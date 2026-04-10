@@ -38,7 +38,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.75,
     }));
 
-    return [...entries, ...companyEntries];
+    const { data: jobRows, error: jobsError } = await supabase
+      .from("jobs")
+      .select("id")
+      .eq("status", "open");
+
+    if (jobsError) {
+      console.error("[sitemap] jobs fetch failed:", jobsError.message);
+      return [...entries, ...companyEntries];
+    }
+
+    const jobIds = (jobRows ?? [])
+      .map((row) => row.id)
+      .filter((id): id is string => Boolean(id));
+
+    const jobEntries: MetadataRoute.Sitemap = jobIds.map((id) => ({
+      url: `${SITE}/jobs/${id}`,
+      changeFrequency: "daily",
+      priority: 0.7,
+    }));
+
+    return [...entries, ...companyEntries, ...jobEntries];
   } catch (e) {
     console.error("[sitemap] unexpected error:", e);
     return entries;

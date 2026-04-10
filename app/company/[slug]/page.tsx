@@ -137,6 +137,7 @@ async function getCompanyData(slug: string) {
       .from("jobs")
       .select("id,title,location,job_type,posted_at,apply_url")
       .eq("company_id", company.id)
+      .eq("status", "open")
       .order("posted_at", { ascending: false }),
   ]);
 
@@ -377,13 +378,20 @@ export default async function PublicCompanyPage({ params }: { params: { slug: st
                         <span>Posted {formatDate(job.posted_at)}</span>
                       </p>
                     </div>
-                    {job.apply_url ? (
-                      <a href={normalizeUrl(job.apply_url) ?? undefined} target="_blank" rel="noreferrer">
-                        <Button className="bg-[#27AE60] text-white hover:bg-[#229954]">Apply</Button>
-                      </a>
-                    ) : (
-                      <Button disabled>Apply</Button>
-                    )}
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Link href={`/jobs/${job.id}`}>
+                        <Button variant="outline" className="border-[#27AE60] text-[#27AE60] hover:bg-[#27AE60]/5">
+                          View listing
+                        </Button>
+                      </Link>
+                      {job.apply_url ? (
+                        <a href={normalizeUrl(job.apply_url) ?? undefined} target="_blank" rel="noreferrer">
+                          <Button className="bg-[#27AE60] text-white hover:bg-[#229954]">Apply</Button>
+                        </a>
+                      ) : (
+                        <Button disabled>Apply</Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
