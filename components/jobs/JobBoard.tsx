@@ -266,30 +266,52 @@ export function JobBoard() {
           onChange={(e) => setSearch(e.target.value)}
           className="h-11 rounded-lg border-[#E5E7EB] bg-[#F7F8FA] sm:min-w-[220px] sm:flex-1"
         />
-        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? "all")}>
-          <SelectTrigger className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[180px]">
-            <SelectValue placeholder="Job type" />
-          </SelectTrigger>
-          <SelectContent className="z-[80] border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
-            {JOB_TYPE_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={locationFilter} onValueChange={(v) => setLocationFilter(v ?? "all")}>
-          <SelectTrigger className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[180px]">
-            <SelectValue placeholder="Location" />
-          </SelectTrigger>
-          <SelectContent className="z-[80] border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
-            {LOCATION_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="job-board-type-filter"
+            className="text-xs font-medium uppercase tracking-wide text-[#6B7280]"
+          >
+            Job Type
+          </label>
+          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? "all")}>
+            <SelectTrigger
+              id="job-board-type-filter"
+              className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[180px]"
+            >
+              <SelectValue placeholder="Job type" />
+            </SelectTrigger>
+            <SelectContent className="z-[80] border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
+              {JOB_TYPE_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="job-board-location-filter"
+            className="text-xs font-medium uppercase tracking-wide text-[#6B7280]"
+          >
+            Location
+          </label>
+          <Select value={locationFilter} onValueChange={(v) => setLocationFilter(v ?? "all")}>
+            <SelectTrigger
+              id="job-board-location-filter"
+              className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[180px]"
+            >
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent className="z-[80] border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
+              {LOCATION_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {loadError ? (

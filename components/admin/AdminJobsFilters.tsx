@@ -58,30 +58,52 @@ export function AdminJobsFilters() {
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-      <Select value={status} onValueChange={(v) => pushFilters({ status: v ?? "all" })}>
-        <SelectTrigger className="h-10 w-full border-slate-600 bg-slate-900 text-slate-100 sm:w-[200px]">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent className="z-[80] border border-slate-600 bg-slate-900 text-slate-100">
-          {STATUS_OPTIONS.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select value={source} onValueChange={(v) => pushFilters({ source: v ?? "all" })}>
-        <SelectTrigger className="h-10 w-full border-slate-600 bg-slate-900 text-slate-100 sm:w-[200px]">
-          <SelectValue placeholder="Source" />
-        </SelectTrigger>
-        <SelectContent className="z-[80] border border-slate-600 bg-slate-900 text-slate-100">
-          {SOURCE_OPTIONS.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex flex-col gap-1">
+        <label
+          htmlFor="admin-jobs-status-filter"
+          className="text-xs font-medium uppercase tracking-wide text-slate-400"
+        >
+          Status
+        </label>
+        <Select value={status} onValueChange={(v) => pushFilters({ status: v ?? "all" })}>
+          <SelectTrigger
+            id="admin-jobs-status-filter"
+            className="h-10 w-full border-slate-600 bg-slate-900 text-slate-100 sm:w-[200px]"
+          >
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent className="z-[80] border border-slate-600 bg-slate-900 text-slate-100">
+            {STATUS_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex flex-col gap-1">
+        <label
+          htmlFor="admin-jobs-source-filter"
+          className="text-xs font-medium uppercase tracking-wide text-slate-400"
+        >
+          Source
+        </label>
+        <Select value={source} onValueChange={(v) => pushFilters({ source: v ?? "all" })}>
+          <SelectTrigger
+            id="admin-jobs-source-filter"
+            className="h-10 w-full border-slate-600 bg-slate-900 text-slate-100 sm:w-[200px]"
+          >
+            <SelectValue placeholder="Source" />
+          </SelectTrigger>
+          <SelectContent className="z-[80] border border-slate-600 bg-slate-900 text-slate-100">
+            {SOURCE_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 }

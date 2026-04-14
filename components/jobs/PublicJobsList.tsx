@@ -133,50 +133,83 @@ export function PublicJobsList({ jobs }: { jobs: PublicJobListItem[] }) {
           className="h-11 rounded-lg border-[#E5E7EB] bg-[#F7F8FA] sm:min-w-[200px] sm:flex-1"
           aria-label="Search jobs"
         />
-        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? "all")}>
-          <SelectTrigger className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[170px]">
-            <SelectValue placeholder="Job type" />
-          </SelectTrigger>
-          <SelectContent className="z-[80] border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
-            {JOB_TYPE_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={locationFilter}
-          onValueChange={(v) => setLocationFilter(v ?? ALL_LOCATION)}
-        >
-          <SelectTrigger className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[170px]">
-            <SelectValue placeholder="Location" />
-          </SelectTrigger>
-          <SelectContent className="z-[80] max-h-60 border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
-            <SelectItem value={ALL_LOCATION}>All locations</SelectItem>
-            {locationOptions.map((loc) => (
-              <SelectItem key={loc} value={loc}>
-                {loc}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={industryFilter}
-          onValueChange={(v) => setIndustryFilter(v ?? ALL_INDUSTRY)}
-        >
-          <SelectTrigger className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[180px]">
-            <SelectValue placeholder="Industry" />
-          </SelectTrigger>
-          <SelectContent className="z-[80] max-h-60 border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
-            <SelectItem value={ALL_INDUSTRY}>All industries</SelectItem>
-            {industryOptions.map((ind) => (
-              <SelectItem key={ind} value={ind}>
-                {ind}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="public-jobs-type-filter"
+            className="text-xs font-medium uppercase tracking-wide text-[#6B7280]"
+          >
+            Job Type
+          </label>
+          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? "all")}>
+            <SelectTrigger
+              id="public-jobs-type-filter"
+              className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[170px]"
+            >
+              <SelectValue placeholder="Job type" />
+            </SelectTrigger>
+            <SelectContent className="z-[80] border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
+              {JOB_TYPE_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="public-jobs-location-filter"
+            className="text-xs font-medium uppercase tracking-wide text-[#6B7280]"
+          >
+            Location
+          </label>
+          <Select
+            value={locationFilter}
+            onValueChange={(v) => setLocationFilter(v ?? ALL_LOCATION)}
+          >
+            <SelectTrigger
+              id="public-jobs-location-filter"
+              className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[170px]"
+            >
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent className="z-[80] max-h-60 border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
+              <SelectItem value={ALL_LOCATION}>All locations</SelectItem>
+              {locationOptions.map((loc) => (
+                <SelectItem key={loc} value={loc}>
+                  {loc}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="public-jobs-industry-filter"
+            className="text-xs font-medium uppercase tracking-wide text-[#6B7280]"
+          >
+            Industry
+          </label>
+          <Select
+            value={industryFilter}
+            onValueChange={(v) => setIndustryFilter(v ?? ALL_INDUSTRY)}
+          >
+            <SelectTrigger
+              id="public-jobs-industry-filter"
+              className="h-11 w-full rounded-lg border-[#E5E7EB] bg-white sm:w-[180px]"
+            >
+              <SelectValue placeholder="Industry" />
+            </SelectTrigger>
+            <SelectContent className="z-[80] max-h-60 border border-[#E5E7EB] bg-white text-[#0D0D0D] shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
+              <SelectItem value={ALL_INDUSTRY}>All industries</SelectItem>
+              {industryOptions.map((ind) => (
+                <SelectItem key={ind} value={ind}>
+                  {ind}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
