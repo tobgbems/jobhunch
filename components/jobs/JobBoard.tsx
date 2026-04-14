@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
+  Banknote,
   Bookmark,
   Briefcase,
   Calendar,
@@ -39,6 +40,9 @@ export type JobRow = {
   title: string;
   location: string | null;
   job_type: string | null;
+  salary_range: string | null;
+  responsibilities: string | null;
+  requirements: string | null;
   apply_url: string | null;
   source: string | null;
   posted_at: string | null;
@@ -90,6 +94,10 @@ function formatPostedAt(iso: string | null) {
   } catch {
     return "—";
   }
+}
+
+function hasText(value: string | null) {
+  return Boolean(value?.trim());
 }
 
 function isRemoteLocation(location: string | null) {
@@ -146,7 +154,9 @@ export function JobBoard() {
       setLoadError(null);
       const { data, error } = await supabase
         .from("jobs")
-        .select("id,company_id,company_name,title,location,job_type,apply_url,source,posted_at,companies(slug)")
+        .select(
+          "id,company_id,company_name,title,location,job_type,salary_range,responsibilities,requirements,apply_url,source,posted_at,companies(slug)",
+        )
         .neq("status", "deleted")
         .order("posted_at", { ascending: false });
       if (cancelled) return;
@@ -467,12 +477,39 @@ export function JobBoard() {
                   <Calendar className="size-3.5 text-[#6B7280]" aria-hidden />
                   Posted {formatPostedAt(detailJob.posted_at)}
                 </span>
+                {hasText(detailJob.salary_range) ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1 text-xs font-medium text-[#0D0D0D]">
+                    <Banknote className="size-3.5 text-[#6B7280]" aria-hidden />
+                    {detailJob.salary_range}
+                  </span>
+                ) : null}
               </div>
 
-              <div className="mt-6 rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-                <p className="text-sm leading-relaxed text-[#6B7280]">
-                  Visit the company&apos;s careers page to view the full job description and apply.
-                </p>
+              <div className="mt-6 space-y-6 rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+                {hasText(detailJob.responsibilities) ? (
+                  <section className="space-y-2">
+                    <h2 className="text-base font-semibold text-[#0D0D0D]">About the role</h2>
+                    <div className="whitespace-pre-line text-sm leading-relaxed text-[#374151]">
+                      {detailJob.responsibilities}
+                    </div>
+                  </section>
+                ) : null}
+
+                {hasText(detailJob.requirements) ? (
+                  <section className="space-y-2">
+                    <h2 className="text-base font-semibold text-[#0D0D0D]">Requirements</h2>
+                    <div className="whitespace-pre-line text-sm leading-relaxed text-[#374151]">
+                      {detailJob.requirements}
+                    </div>
+                  </section>
+                ) : null}
+
+                {!hasText(detailJob.responsibilities) && !hasText(detailJob.requirements) ? (
+                  <p className="text-sm leading-relaxed text-[#6B7280]">
+                    Full description not available on JobHunch yet. Use Apply now to view details on the company&apos;s careers
+                    page.
+                  </p>
+                ) : null}
               </div>
 
               <div className="mt-8 flex flex-col gap-3">

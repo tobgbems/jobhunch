@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 const navLinks = [
   { href: "#features", label: "Features" },
@@ -14,8 +15,31 @@ const navLinks = [
 
 export function LandingNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  const handleNavClick = (href: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!href.startsWith("#")) {
+      closeMobileMenu();
+      return;
+    }
+
+    event.preventDefault();
+    closeMobileMenu();
+
+    if (pathname !== "/") {
+      router.push(`/${href}`);
+      return;
+    }
+
+    const section = document.querySelector(href);
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.history.replaceState(null, "", href);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#E5E7EB] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
@@ -41,6 +65,7 @@ export function LandingNavbar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={handleNavClick(item.href)}
                 className="text-sm font-medium text-[#6B7280] transition-colors hover:text-[#0D0D0D]"
               >
                 {item.label}
@@ -89,7 +114,7 @@ export function LandingNavbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={closeMobileMenu}
+                onClick={handleNavClick(item.href)}
                 className="border-b border-[#F3F4F6] py-3 text-sm font-medium text-[#0D0D0D] transition-colors hover:text-[#27AE60] last:border-b-0"
               >
                 {item.label}

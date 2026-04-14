@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ExternalLink, MapPin, Building2, Users, Briefcase } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { LandingFooter } from "@/components/landing/landing-footer";
+import { LandingNavbar } from "@/components/landing/landing-navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StarRating } from "@/components/reviews/StarRating";
@@ -204,8 +206,10 @@ export default async function PublicCompanyPage({ params }: { params: { slug: st
   const websiteUrl = normalizeUrl(company.website);
 
   return (
-    <main className="min-h-screen bg-[#F7F8FA] text-[#0D0D0D]">
-      <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 md:px-6 md:py-10">
+    <div className="min-h-screen bg-[#F7F8FA] text-[#0D0D0D] antialiased">
+      <LandingNavbar />
+      <main>
+        <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 md:px-6 md:py-10">
         <section className="rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:p-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="space-y-2">
@@ -399,7 +403,9 @@ export default async function PublicCompanyPage({ params }: { params: { slug: st
             </div>
           )}
         </section>
-      </div>
-    </main>
+        </div>
+      </main>
+      <LandingFooter />
+    </div>
   );
 }

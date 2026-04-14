@@ -48,10 +48,11 @@ Migrations live in **`supabase/migrations/`**. Apply via Supabase CLI or paste i
 | `20260410120000_jobs_status_and_detail_fields.sql` | Adds **`jobs.status`** (`open` / `closed` / `draft`, default `open`), **`salary_range`**, **`responsibilities`**, **`requirements`**; index on `(status, posted_at)`; PostgREST reload |
 | `20260411120000_jobs_last_seen_apply_url_unique.sql` | Adds **`jobs.last_seen_at`**; partial unique index **`jobs_apply_url_unique_idx`** on **`apply_url`** (for PostgREST upsert / scraper dedupe); `NOTIFY pgrst, 'reload schema'`. If duplicates block the index, see **README → Job Scraping → Troubleshooting** (dedupe + `UNIQUE (apply_url)` constraint). |
 | `20260412120000_admin_profiles_is_admin_jobs_rls.sql` | Adds **`profiles.is_admin`** (default `false`); extends **`jobs.status`** with **`deleted`** (soft delete); extends **`jobs.job_type`** with **`hybrid`**; replaces **`jobs` RLS**: rows with **`status = deleted`** hidden from non-admins; **`INSERT`/`UPDATE` on `jobs`** for **`authenticated`** users with **`is_admin = true`**; service-role scraper unchanged (bypasses RLS); replaces **`jobs_apply_url_unique_idx`** so uniqueness applies only when **`status` is not `deleted`** (reuse of `apply_url` after soft delete). Includes commented SQL to promote an owner by **`profiles.email`**. |
+| `20260414123000_admin_reviews_companies_rls.sql` | Adds admin-only policies for **`reviews` DELETE** (admins can remove any review) and **`companies` UPDATE** (admins can edit company fields from admin panel); triggers PostgREST schema reload. |
 
 **RLS summary:** Users own their `profiles` and `job_applications`; `reviews` are readable by all, writable by owner; **`jobs`**: anon/authenticated **SELECT** returns non-deleted rows for everyone; **admins** (`profiles.is_admin`) also see **deleted**; **`INSERT`/`UPDATE` on `jobs`** allowed for **service role** (scraper) and for **authenticated admins**; no **`DELETE`** policy on **`jobs`** for the anon key (soft delete via **`UPDATE`** only); **`companies`** readable broadly; review reads for the app use **`public_reviews`**, not raw **`reviews`**, so anonymous reviews never leak identity in list/detail UIs.
 
-**Admin access:** Apply the migration, then run once in the SQL Editor: `update public.profiles set is_admin = true where lower(btrim(email)) = lower('owner@example.com');` (user must have signed in so `profiles.id` matches auth). Open **`/admin/jobs`** while signed in as that user. Non-admins and logged-out users are **redirected to `/`** (`lib/require-admin.ts`, `app/admin/layout.tsx`). Admin URLs are **not** linked from the public or dashboard nav.
+**Admin access:** Apply the migration(s), then run once in the SQL Editor: `update public.profiles set is_admin = true where lower(btrim(email)) = lower('owner@example.com');` (user must have signed in so `profiles.id` matches auth). Open **`/admin/jobs`**, **`/admin/reviews`**, or **`/admin/companies`** while signed in as that user. Non-admins and logged-out users are **redirected to `/`** (`lib/require-admin.ts`, `app/admin/layout.tsx`). Admin URLs are **not** linked from the public or dashboard nav.
 
 **Important:** If the app errors on missing columns (`location`, `job_type`) or schema cache for `job_applications`, the latest migration above must be applied in Supabase.
 
@@ -83,7 +84,8 @@ One-time legacy user import script: `scripts/migrate-bubble-users.ts` (service-r
 | `/admin/jobs` | Owner-only job admin: table (filters, pagination), add/edit, toggle open/closed, soft delete (`status = deleted`). Dark shell in **`app/admin/layout.tsx`**. Server actions: **`app/admin/jobs/actions.ts`**. |
 | `/admin/jobs/new` | Create manual job (`source = manual`, `last_seen_at` set). |
 | `/admin/jobs/[id]/edit` | Edit job (restores from **deleted** by setting status to open/closed/draft). |
-| `/admin/reviews`, `/admin/companies` | Placeholders (“coming soon”). |
+| `/admin/reviews` | Owner-only review moderation table sourced from `public_reviews`; client-side company search; delete action via `app/admin/reviews/actions.ts` (deletes from `reviews`). |
+| `/admin/companies` | Owner-only companies table from `companies`; client-side company search; inline edit modal (name, industry, size, website, description) via `app/admin/companies/actions.ts`. |
 | `/company/[slug]` | Public, crawlable company page with SSR metadata (`generateMetadata`: title `"{Name} Reviews – JobHunch"`, description from `companies.description` with review-count fallback), rating summaries, reviews (pros/cons blurred for logged-out users), and open jobs (links to **`/jobs/[id]`** + apply) |
 
 ## SEO & Google Search Console
@@ -128,4 +130,4 @@ When shipping a feature or changing schema:
 
 ---
 
-*Last updated: 2026-04-10 — Admin `/admin/jobs` (owner `profiles.is_admin`, RLS, soft delete, hybrid job type), migration `20260412120000`. Prior: job scraper, `20260411120000`, public `/jobs/[id]`.*
+*Last updated: 2026-04-14 — Admin `/admin/reviews` and `/admin/companies` implemented (review delete + company edit actions) with migration `20260414123000` for admin RLS on `reviews`/`companies`. Prior: admin `/admin/jobs` migration `20260412120000`.*
