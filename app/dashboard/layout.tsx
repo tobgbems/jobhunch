@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardSidebar } from "@/app/dashboard/DashboardSidebar";
-import { DashboardMobileHeader } from "@/app/dashboard/DashboardMobileHeader";
+import { DashboardMobileBottomNav } from "@/app/dashboard/DashboardMobileBottomNav";
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -51,13 +51,6 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
   return (
     <div className="min-h-screen bg-[#F7F8FA] text-[#0D0D0D] reviews-light">
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
-        <DashboardMobileHeader
-          navItems={navItems}
-          displayName={displayName}
-          avatarUrl={avatarUrl}
-          initials={initials}
-          email={user.email}
-        />
         <div className="grid gap-6 md:grid-cols-[280px_1fr] md:items-start">
           <div className="hidden md:block">
             <DashboardSidebar
@@ -69,9 +62,10 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
             />
           </div>
 
-          <main className="min-w-0">{children}</main>
+          <main className="min-w-0 pb-16 md:pb-0">{children}</main>
         </div>
       </div>
+      <DashboardMobileBottomNav navItems={navItems} />
     </div>
   );
 }
