@@ -36,6 +36,58 @@ MAX_JOBS_PER_SOURCE = 35
 STALE_DAYS = 14
 
 ALLOWED_JOB_TYPES = frozenset({"full-time", "part-time", "contract", "remote"})
+ALLOWED_CATEGORIES = [
+    "technology",
+    "software",
+    "engineering",
+    "product",
+    "design",
+    "marketing",
+    "sales",
+    "finance",
+    "accounting",
+    "banking",
+    "human resources",
+    "operations",
+    "consulting",
+    "data",
+    "analytics",
+    "media",
+    "communications",
+    "legal",
+    "healthcare management",
+    "project management",
+    "customer success",
+    "ecommerce",
+]
+BLOCKED_TITLE_KEYWORDS = [
+    "driver",
+    "chef",
+    "cook",
+    "cleaner",
+    "hairdresser",
+    "stylist",
+    "security guard",
+    "tailor",
+    "mechanic",
+    "plumber",
+    "electrician",
+]
+RESPONSIBILITIES_HEADER_KEYWORDS = (
+    "responsibil",
+    "duties",
+    "what you will do",
+    "role overview",
+    "key task",
+)
+REQUIREMENTS_HEADER_KEYWORDS = (
+    "requirement",
+    "qualification",
+    "skills",
+    "what we are looking for",
+    "experience",
+    "competenc",
+)
 
 
 def normalize_apply_url(url: str) -> str:
@@ -59,14 +111,127 @@ def polite_sleep() -> None:
     time.sleep(REQUEST_DELAY_SEC)
 
 
-def html_to_plain_text(html: str, max_len: int = 1200) -> str:
+def html_to_plain_text(html: str) -> str:
     if not html:
         return ""
     decoded = html_lib.unescape(html)
     soup = BeautifulSoup(decoded, "html.parser")
-    text = soup.get_text(separator=" ", strip=True)
-    text = re.sub(r"\s+", " ", text)
-    return text[:max_len].strip()
+    # If a source later hides details behind JS-only readmore widgets, switch this
+    # extraction path to a rendered-browser fetch (Playwright/Selenium/Apify).
+    text = soup.get_text(separator="\n", strip=True)
+    return text.strip()
+
+
+def normalize_lines(text: str) -> list[str]:
+    lines: list[str] = []
+    for raw in text.splitlines():
+        line = re.sub(r"\s+", " ", raw).strip()
+        if line:
+            lines.append(line)
+    return lines
+
+
+def is_section_header(line: str) -> bool:
+    if len(line) > 100:
+        return False
+    if line.endswith(":"):
+        return True
+    letters = [c for c in line if c.isalpha()]
+    if not letters:
+        return False
+    upper_letters = sum(1 for c in letters if c.isupper())
+    return upper_letters / len(letters) >= 0.85
+
+
+def format_description_text(raw_text: str) -> str:
+    lines = normalize_lines(raw_text)
+    if not lines:
+        return ""
+    formatted: list[str] = []
+    for line in lines:
+        if not formatted:
+            formatted.append(line)
+            continue
+        if is_section_header(line):
+            if formatted[-1] != "":
+                formatted.append("")
+            formatted.append(line)
+            formatted.append("")
+            continue
+        if formatted[-1] == "":
+            formatted.append(line)
+        else:
+            formatted[-1] = f"{formatted[-1]} {line}"
+    while formatted and formatted[0] == "":
+        formatted.pop(0)
+    while formatted and formatted[-1] == "":
+        formatted.pop()
+    return "\n".join(formatted)
+
+
+def split_sectioned_text(formatted_text: str) -> tuple[str, str | None]:
+    if not formatted_text:
+        return "", None
+    paragraphs = [p.strip() for p in formatted_text.split("\n\n") if p.strip()]
+    if not paragraphs:
+        return formatted_text, None
+
+    responsibilities_parts: list[str] = []
+    requirements_parts: list[str] = []
+    current = "responsibilities"
+    found_requirements = False
+
+    for para in paragraphs:
+        heading = para.splitlines()[0].lower()
+        if any(k in heading for k in RESPONSIBILITIES_HEADER_KEYWORDS):
+            current = "responsibilities"
+            responsibilities_parts.append(para)
+            continue
+        if any(k in heading for k in REQUIREMENTS_HEADER_KEYWORDS):
+            current = "requirements"
+            found_requirements = True
+            requirements_parts.append(para)
+            continue
+        if current == "requirements":
+            requirements_parts.append(para)
+        else:
+            responsibilities_parts.append(para)
+
+    if not responsibilities_parts:
+        responsibilities_parts = paragraphs
+    responsibilities = "\n\n".join(responsibilities_parts).strip()
+    requirements = "\n\n".join(requirements_parts).strip() if found_requirements and requirements_parts else None
+    return responsibilities, requirements
+
+
+def extract_category_text(job_posting: dict[str, Any], soup: BeautifulSoup) -> str:
+    parts: list[str] = []
+    for key in ("industry", "occupationalCategory", "keywords", "jobCategory"):
+        value = job_posting.get(key)
+        if isinstance(value, list):
+            parts.extend(str(v).strip() for v in value if str(v).strip())
+        elif value:
+            parts.append(str(value).strip())
+
+    labels = ("industry", "category", "sector")
+    for li in soup.find_all("li"):
+        label = li.find("span", class_=re.compile(r"jkey-title", re.I))
+        info = li.find("span", class_=re.compile(r"jkey-info", re.I))
+        if label and info and any(tag in label.get_text(strip=True).lower() for tag in labels):
+            val = info.get_text(" ", strip=True)
+            if val:
+                parts.append(val)
+    return " | ".join(parts)
+
+
+def title_blocked(title: str) -> bool:
+    low_title = title.lower()
+    return any(keyword in low_title for keyword in BLOCKED_TITLE_KEYWORDS)
+
+
+def category_allowed(category_text: str) -> bool:
+    low_category = category_text.lower()
+    return any(term in low_category for term in ALLOWED_CATEGORIES)
 
 
 def map_employment_type(raw: str | None) -> str:
@@ -154,7 +319,9 @@ def parse_jobberman_detail(session: requests.Session, listing_url: str) -> dict[
 
     title = (job_posting.get("title") or "").strip() or "Untitled role"
     desc_html = job_posting.get("description") or ""
-    description = html_to_plain_text(desc_html)
+    description_raw = html_to_plain_text(desc_html)
+    description = format_description_text(description_raw)
+    responsibilities, requirements = split_sectioned_text(description)
 
     hiring = job_posting.get("hiringOrganization")
     company_name = "Unknown employer"
@@ -189,6 +356,7 @@ def parse_jobberman_detail(session: requests.Session, listing_url: str) -> dict[
 
     posted_raw = job_posting.get("datePosted") or job_posting.get("datePublished")
     posted_at = parse_iso_date(posted_raw)
+    category = extract_category_text(job_posting, soup)
 
     return {
         "title": title[:500],
@@ -196,6 +364,9 @@ def parse_jobberman_detail(session: requests.Session, listing_url: str) -> dict[
         "location": location[:200] or "Nigeria",
         "job_type": job_type,
         "description": description,
+        "responsibilities": responsibilities,
+        "requirements": requirements,
+        "category": category,
         "apply_url": normalize_apply_url(listing_url),
         "posted_at": posted_at,
         "source": "jobberman",
@@ -266,7 +437,9 @@ def parse_myjobmag_detail(session: requests.Session, path: str) -> dict[str, Any
 
     title = (job_posting.get("title") or "").strip() or "Untitled role"
     desc_html = html_lib.unescape(job_posting.get("description") or "")
-    description = html_to_plain_text(desc_html)
+    description_raw = html_to_plain_text(desc_html)
+    description = format_description_text(description_raw)
+    responsibilities, requirements = split_sectioned_text(description)
 
     org = job_posting.get("hiringOrganization") or {}
     company_name = "Unknown employer"
@@ -293,6 +466,7 @@ def parse_myjobmag_detail(session: requests.Session, path: str) -> dict[str, Any
     job_type = map_employment_type(str(emp) if emp else None)
 
     posted_at = parse_iso_date(job_posting.get("datePosted"))
+    category = extract_category_text(job_posting, soup)
 
     return {
         "title": title[:500],
@@ -300,6 +474,9 @@ def parse_myjobmag_detail(session: requests.Session, path: str) -> dict[str, Any
         "location": (location or "Nigeria")[:200],
         "job_type": job_type,
         "description": description,
+        "responsibilities": responsibilities,
+        "requirements": requirements,
+        "category": category,
         "apply_url": job_url,
         "posted_at": posted_at,
         "source": "myjobmag",
@@ -351,6 +528,8 @@ def rows_for_supabase(rows: list[dict[str, Any]], now_iso: str) -> list[dict[str
                 "location": r.get("location"),
                 "job_type": jt,
                 "description": r.get("description") or None,
+                "responsibilities": r.get("responsibilities") or None,
+                "requirements": r.get("requirements") or None,
                 "apply_url": r["apply_url"],
                 "source": r["source"],
                 "is_scraped": True,
@@ -387,7 +566,30 @@ def main() -> None:
     except Exception as e:
         logger.warning("MyJobMag source crashed: %s", e)
 
+    scraped_count = len(all_rows)
     all_rows = dedupe_by_apply_url(all_rows)
+    skipped_category = 0
+    skipped_title = 0
+    filtered_rows: list[dict[str, Any]] = []
+    for row in all_rows:
+        title = row.get("title", "")
+        if title_blocked(title):
+            skipped_title += 1
+            logger.info("Skipping [%s] — title contains blocked keyword", title)
+            continue
+
+        category = row.get("category", "")
+        if not category_allowed(category):
+            skipped_category += 1
+            logger.info(
+                "Skipping [%s] — category [%s] not in allowed list",
+                title,
+                category or "Unknown",
+            )
+            continue
+        filtered_rows.append(row)
+
+    all_rows = filtered_rows
     if not all_rows:
         logger.warning("No jobs scraped; skipping upsert.")
 
@@ -439,8 +641,8 @@ def main() -> None:
         logger.warning("Stale close pass failed (non-fatal): %s", e)
 
     print(
-        f"Summary: inserted={inserted}, updated={updated}, deactivated={deactivated}, "
-        f"scraped_rows={len(payload)}"
+        f"Scraped {scraped_count} jobs, inserted/updated {inserted + updated}, "
+        f"skipped {skipped_category} (category filter), skipped {skipped_title} (title filter)"
     )
 
 
