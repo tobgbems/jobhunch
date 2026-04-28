@@ -16,6 +16,17 @@ export function LandingCtaBanner() {
         >
           Get started free
         </Link>
+        <p className="mt-3 text-xs text-white/70 sm:text-sm">
+          By signing up, you agree to our{" "}
+          <Link href="/privacy" className="underline underline-offset-2 hover:text-white">
+            Privacy Policy
+          </Link>{" "}
+          and{" "}
+          <Link href="/terms" className="underline underline-offset-2 hover:text-white">
+            Terms
+          </Link>
+          .
+        </p>
       </div>
     </section>
   );
