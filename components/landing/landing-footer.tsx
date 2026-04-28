@@ -5,8 +5,6 @@ const footerLinks = [
   { href: "#features", label: "Features" },
   { href: "#reviews", label: "Reviews" },
   { href: "/jobs", label: "Jobs" },
-  { href: "/privacy", label: "Privacy Policy" },
-  { href: "/terms", label: "Terms" },
 ];
 
 export function LandingFooter() {
@@ -23,12 +21,30 @@ export function LandingFooter() {
         >
           {footerLinks.map((item, i) => (
             <span key={item.href} className="inline-flex items-center">
-              {i > 0 && <span className="mx-2 text-[#E5E7EB]" aria-hidden>·</span>}
+              <span className="mx-2 text-[#E5E7EB]" aria-hidden>
+                ·
+              </span>
               <a href={item.href} className="transition-colors hover:text-[#0D0D0D]">
                 {item.label}
               </a>
             </span>
           ))}
+          <span className="inline-flex items-center">
+            <span className="mx-2 text-[#E5E7EB]" aria-hidden>
+              ·
+            </span>
+            <Link href="/privacy" className="transition-colors hover:text-[#0D0D0D]">
+              Privacy Policy
+            </Link>
+          </span>
+          <span className="inline-flex items-center">
+            <span className="mx-2 text-[#E5E7EB]" aria-hidden>
+              ·
+            </span>
+            <Link href="/terms" className="transition-colors hover:text-[#0D0D0D]">
+              Terms
+            </Link>
+          </span>
         </nav>
 
         <p className="text-sm text-[#6B7280] lg:text-right">© 2026 JobHunch. Built for Africa.</p>
